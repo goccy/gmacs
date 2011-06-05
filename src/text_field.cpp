@@ -3,15 +3,17 @@
 using namespace std;
 GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 {
-	setStyleSheet("background-color:black;" "color:white");
+	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco");
 	setLineWrapMode(QTextEdit::NoWrap);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setCursorWidth(0);
 	cursor = textCursor();
-	//setTabStopWidth(4);
+	setTabStopWidth(4);
 	setObjectName("GmacsTextField");
 	setTextCursor(cursor);
 	isFocus = true;
+	isHighlightAll = false;
+	isOpenCompletionWindow = false;
 	const int blinkPeriod = 500;
 	startTimer(blinkPeriod);
 	sh = new GmacsSyntaxHighlighter();
@@ -21,6 +23,7 @@ GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 	sh->setPreservedKeywordColor(sl->preserved_keyword_color);
 	sh->addTypeKeywordList(sl->type_keyword_list);
 	sh->setTypeKeywordColor(sl->type_keyword_color);
+	sh->initParser();
 }
 
 void GmacsTextField::timerEvent(QTimerEvent *event)
@@ -35,7 +38,8 @@ void GmacsTextField::timerEvent(QTimerEvent *event)
 
 void GmacsTextField::paintEvent(QPaintEvent *event)
 {
-	if (isFocus && (isKeyPress || isCurVisible)) {
+	if (isFocus && (isKeyPress || isCurVisible) ||
+		isHighlightAll) {
 		drawCursor();
 	}
 	setCursorWidth(0);
@@ -54,6 +58,10 @@ void GmacsTextField::drawCursor()
 
 void GmacsTextField::keyPressEvent(QKeyEvent *event)
 {
+	//if (isOpenCompletionWindow) {
+		//qDebug() << "hello";
+		//cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor);
+	//}
 	//cout << "=========== key press event =======" << endl;
 	//cout << event->key() << endl;
 	//cout << event->modifiers() << endl;
@@ -90,6 +98,20 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Y:
 		pressY();
 		break;
+	case Qt::Key_Up:
+		if (isOpenCompletionWindow) {
+			releaseKeyboard();
+			gc->grabKeyboard();
+		}
+		break;
+	case Qt::Key_Down:
+		if (isOpenCompletionWindow) {
+			releaseKeyboard();
+			gc->grabKeyboard();
+			int r = gc->currentRow();
+			gc->setCurrentRow(r+1);
+		}
+		break;
 	case Qt::Key_Backspace:
 		kill_buf_count = 0;
 		if (cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor)) {
@@ -102,15 +124,27 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 		command_count = 0;
 		break;
 	default:
+		gc->close();
+		isOpenCompletionWindow = false;
 		kill_buf_count = 0;
 		cursor.insertText(event->text());
 		setTextCursor(cursor);
 		command_count = 0;
+		qDebug() << "main_window_pos = " << main_window->pos();
+		if (gc->completion_list.size() != 0) {
+			QRect rect = cursorRect(cursor);
+			QPoint pos = main_window->pos();
+			gc->setPosition(pos.x() + rect.left(), pos.y() + rect.bottom() + 30);
+			gc->open(&cursor);
+			isOpenCompletionWindow = true;
+		}
 		break;
 	}
 	resetModifier();
+	//setOverwriteMode(true);
 	sh->highlight(&cursor, width());
 	setTextCursor(cursor);
+	//setOverwriteMode(false);
 }
 
 void GmacsTextField::setModifier(QKeyEvent *event)

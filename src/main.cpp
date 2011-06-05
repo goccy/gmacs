@@ -5,8 +5,9 @@ using namespace std;
 GmacsMainWindow::GmacsMainWindow(QMainWindow *parent) : QMainWindow(parent)
 {
 	resize(600, 600);
-	setWindowOpacity(0.9);
+	setWindowOpacity(0.8);
 	setWindowTitle("Gmacs");
+	gc = new GmacsCompletion();
 }
 
 class GmacsMainField : public QWidget {
@@ -16,7 +17,7 @@ class GmacsMainField : public QWidget {
 public:
 	GmacsMainField(QWidget *parent = 0);
 	void addWidget(QWidget *widget);
-	void setReference();
+	void setReference(GmacsMainWindow *main);
 };
 
 GmacsMainField::GmacsMainField(QWidget *parent) : QWidget(parent)
@@ -38,9 +39,15 @@ void GmacsMainField::addWidget(QWidget *w)
 	}
 }
 
-void GmacsMainField::setReference()
+void GmacsMainField::setReference(GmacsMainWindow *main)
 {
+	GmacsCompletion *gc = main->gc;
+
 	gtf->glf = glf;
+	gtf->main_window = main;
+	gtf->gc = gc;
+
+	gc->gtf = gtf;
 	glf->gtf = gtf;
 }
 
@@ -65,8 +72,8 @@ public:
 
 Gmacs::Gmacs(int argc, char **argv)
 {
-	QFont font;
-	font.setPointSize(18);
+	QFont font("monaco");
+	font.setPointSize(14);
 	font.setFixedPitch(true);
 	font.setBold(false);
 	app = new QApplication(argc, argv);
@@ -89,7 +96,7 @@ int main(int argc, char **argv)
 	main->addWidget(gtf);
 	main->addWidget(sb);
 	main->addWidget(glf);
-	main->setReference();
+	main->setReference(window);
 	window->setCentralWidget(main);
 	window->show();
 	gmacs->start();

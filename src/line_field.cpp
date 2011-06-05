@@ -1,15 +1,20 @@
 #include <gmacs.hpp>
 
 using namespace std;
+
 GmacsLineField::GmacsLineField(GmacsTextField *parent) : GmacsTextField(parent)
 {
-	setStyleSheet("background-color:black;" "color:white");
+	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco");
 	setMinimumSize(QSize(50, 30));
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setFixedHeight(30);
 	setObjectName("GmacsLineField");
 	isFocus = false;
+	isPressedCtrl = false;
+	isPressedShift = false;
+	isPressedAlt = false;
+	isPressedCommand = false;
 	white.setForeground(Qt::white);
 	script_loader = new GmacsScriptLoader();
 }
@@ -65,10 +70,27 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 		gtf->setDocument(document);
 		QTextCursor cur = gtf->textCursor();
 		gtf->cursor = cur;
-		gtf->isFocus = true;
-		gtf->grabKeyboard();
+		gtf->sh->highlightAll(&gtf->cursor);
+		QStringList list = gtf->sh->getCompletionList();
+		gtf->gc->setCompletionList(list);
+		gtf->gc->dumpList();
+		//GmacsHighlightThread *th = new GmacsHighlightThread();
+		//th->gtf = gtf;
+		//th->start();
+		gtf->cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+		gtf->command_count = 0;
+		gtf->command[0] = 0;
+		gtf->command[1] = 0;
+		gtf->command[2] = 0;
+		QString text = cursor.block().text();
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+		for (int i = 0; i < text.size(); i++) {
+			cursor.deleteChar();
+		}
 		isFocus = false;
 		releaseKeyboard();
+		gtf->isFocus = true;
+		gtf->grabKeyboard();
 		break;
 	}
 	default:
@@ -94,7 +116,7 @@ void GmacsLineField::findFileMode()
 {
 	QTextCharFormat colorFormat;
 	colorFormat.setForeground(QBrush(QColor("#00ffff")));
-	cursor.insertText("Find File:", colorFormat);
+	cursor.insertText("Find File: ", colorFormat);
 }
 
 QString GmacsLineField::readBuf()
@@ -106,5 +128,24 @@ QString GmacsLineField::readBuf()
 	if (bufs.size() != 0) {
 		buf = bufs[1];
 	}
+	buf = buf.trimmed();
 	return buf;
+}
+
+void GmacsLineField::mousePressEvent(QMouseEvent *event)
+{
+	isFocus = true;
+	grabKeyboard();
+	gtf->isFocus = false;
+	gtf->releaseKeyboard();
+}
+
+GmacsHighlightThread::GmacsHighlightThread(QThread *parent) : QThread(parent)
+{
+	
+}
+
+void GmacsHighlightThread::run()
+{
+	gtf->sh->highlightAll(&gtf->cursor);
 }
