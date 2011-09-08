@@ -8,8 +8,9 @@ GmacsCompletion::GmacsCompletion(QListWidget *parent) : QListWidget(parent)
 	font.setFixedPitch(true);
 	font.setBold(false);
 	setFont(font);
+	setMidLineWidth(1);
 	resize(QSize(200, 150));
-	setWindowOpacity(0.7);
+	setWindowOpacity(0.9);
 	qDebug() << "completion!!";
 }
 
@@ -35,8 +36,7 @@ bool GmacsCompletion::existsWord(QString word)
 
 void GmacsCompletion::addList(QString str)
 {
-
-
+	(void)str;
 }
 
 void GmacsCompletion::dumpList(void)
@@ -47,8 +47,10 @@ void GmacsCompletion::dumpList(void)
 	}
 }
 
-void GmacsCompletion::open(QTextCursor *cursor)
+void GmacsCompletion::open(QTextCursor *cursor, QRect *rect)
 {
+	QPoint window_pos = main_window->pos();
+	setPosition(window_pos.x() + rect->left(), window_pos.y() + rect->bottom() + 30);
 	int pos = cursor->position();
 	cursor->movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
 	QString word = cursor->selectedText();
@@ -111,6 +113,6 @@ void GmacsCompletion::close(void)
 	}
 	qDebug() << "after count = " << count();
 	releaseKeyboard();
-	gtf->grabKeyboard();
+	//gtf->grabKeyboard();
 	this->hide();
 }

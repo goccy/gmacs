@@ -2,13 +2,16 @@
 
 using namespace std;
 
-GmacsLineField::GmacsLineField(GmacsTextField *parent) : GmacsTextField(parent)
+GmacsLineField::GmacsLineField(QTextEdit *parent) : QTextEdit(parent)
 {
 	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco");
 	setMinimumSize(QSize(50, 30));
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setFixedHeight(30);
+	setCursorWidth(0);
+	cursor = textCursor();
+	setTextCursor(cursor);
 	setObjectName("GmacsLineField");
 	isFocus = false;
 	isPressedCtrl = false;
@@ -16,7 +19,8 @@ GmacsLineField::GmacsLineField(GmacsTextField *parent) : GmacsTextField(parent)
 	isPressedAlt = false;
 	isPressedCommand = false;
 	white.setForeground(Qt::white);
-	script_loader = new GmacsScriptLoader();
+	const int blinkPeriod = 500;
+	startTimer(blinkPeriod);
 }
 
 void GmacsLineField::keyPressEvent(QKeyEvent *event)
@@ -27,33 +31,6 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 	isKeyPress = true;
 	setModifier(event);
 	switch (event->key()) {
-	case Qt::Key_A:
-		pressA();
-		break;
-	case Qt::Key_E:
-		pressE();
-		break;
-	case Qt::Key_F:
-		pressF();
-		break;
-	case Qt::Key_B:
-		pressB();
-		break;
-	case Qt::Key_N:
-		pressN();
-		break;
-	case Qt::Key_P:
-		pressP();
-		break;
-	case Qt::Key_D:
-		pressD();
-		break;
-	case Qt::Key_K:
-		pressK();
-		break;
-	case Qt::Key_Y:
-		pressY();
-		break;
 	case Qt::Key_Backspace:
 		kill_buf_count = 0;
 		if (cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor)) {
@@ -62,35 +39,14 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 		break;
 	case Qt::Key_Return: {
 		QString filepath = readBuf();
-		cout << qPrintable(filepath) << endl;
-		QString buf = script_loader->loadScript(filepath);
-		cout << qPrintable(buf);
-		QTextDocument *document = new QTextDocument();
-		document->setPlainText(buf);
-		gtf->setDocument(document);
-		QTextCursor cur = gtf->textCursor();
-		gtf->cursor = cur;
-		gtf->sh->highlightAll(&gtf->cursor);
-		QStringList list = gtf->sh->getCompletionList();
-		gtf->gc->setCompletionList(list);
-		gtf->gc->dumpList();
-		//GmacsHighlightThread *th = new GmacsHighlightThread();
-		//th->gtf = gtf;
-		//th->start();
-		gtf->cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-		gtf->command_count = 0;
-		gtf->command[0] = 0;
-		gtf->command[1] = 0;
-		gtf->command[2] = 0;
+		isFocus = false;
 		QString text = cursor.block().text();
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
 		for (int i = 0; i < text.size(); i++) {
 			cursor.deleteChar();
 		}
-		isFocus = false;
-		releaseKeyboard();
-		gtf->isFocus = true;
-		gtf->grabKeyboard();
+		emit focusToText();
+		emit loadTextSignal(filepath);
 		break;
 	}
 	default:
@@ -135,14 +91,69 @@ QString GmacsLineField::readBuf()
 void GmacsLineField::mousePressEvent(QMouseEvent *event)
 {
 	isFocus = true;
-	grabKeyboard();
-	gtf->isFocus = false;
-	gtf->releaseKeyboard();
+	(void)event;
+}
+
+void GmacsLineField::setModifier(QKeyEvent *event)
+{
+	switch (event->modifiers()) {
+	case Qt::CTRL:
+		//OSX is command
+		isPressedCommand = true;
+		break;
+	case Qt::SHIFT:
+		isPressedShift = true;
+		break;
+	case Qt::ALT:
+		isPressedAlt = true;
+		break;
+	case Qt::META:
+		//OSX is ctrl
+		isPressedCtrl = true;
+		break;
+	default:
+		break;
+	}
+}
+
+void GmacsLineField::timerEvent(QTimerEvent *event)
+{
+	(void)event;
+	if (isCurVisible) {
+		isCurVisible = false;
+	} else {
+		isCurVisible = true;
+	}
+	isKeyPress = false;
+}
+
+void GmacsLineField::drawCursor()
+{
+	QRect r = cursorRect();
+	r.setWidth(10);
+	QPainter painter(viewport());
+	painter.setOpacity(0.6);
+	painter.fillRect(r, Qt::white);
+}
+
+void GmacsLineField::resetModifier()
+{
+	isPressedCtrl = false;
+	isPressedShift = false;
+	isPressedAlt = false;
+	isPressedCommand = false;
+}
+
+void GmacsLineField::grabFocus()
+{
+	isFocus = true;
+	findFileMode();
+	setFocus(Qt::OtherFocusReason);
 }
 
 GmacsHighlightThread::GmacsHighlightThread(QThread *parent) : QThread(parent)
 {
-	
+
 }
 
 void GmacsHighlightThread::run()

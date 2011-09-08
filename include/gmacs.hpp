@@ -1,27 +1,6 @@
 #include <iostream>
 #include <QtGui>
-
-class GmacsTextField;
-class GmacsCompletion : public QListWidget {
-public:
-	QStringList completion_list;
-	GmacsTextField *gtf;
-	GmacsCompletion(QListWidget *parent = 0);
-	void setCompletionList(QStringList list);
-	bool existsWord(QString word);
-	void addList(QString str);
-	void dumpList(void);
-	void open(QTextCursor *cursor);
-	void close(void);
-	void setPosition(int x, int y);
-	virtual void keyPressEvent(QKeyEvent *event);
-};
-
-class GmacsMainWindow : public QMainWindow {
-public:
-	GmacsCompletion *gc;
-    GmacsMainWindow(QMainWindow *parent = 0);
-};
+#include <gmacs_class.hpp>
 
 typedef enum {
 	DEF_T,
@@ -37,6 +16,54 @@ typedef enum {
 	COMMENT_T,
 	ARROW_T,
 } GmacsWordType;
+
+class Gmacs {
+public:
+	QApplication *app;
+	Gmacs(int argc, char **argv);
+	void start();
+};
+
+class GmacsMainWindow : public QMainWindow {
+	Q_OBJECT;
+public:
+    GmacsMainWindow(QMainWindow *parent = 0);
+	void setMainField(GmacsMainField *main);
+};
+
+class GmacsMainField : public QWidget {
+	Q_OBJECT;
+	QVBoxLayout *layout;
+public:
+	GmacsTextField *text;
+	GmacsStatusBar *bar;
+	GmacsLineField *line;
+
+	GmacsMainField(QWidget *parent = 0);
+	void addWidget(QWidget *widget);
+	void setConnect(void);
+};
+
+class GmacsStatusBar : public QLabel {
+public:
+	GmacsStatusBar(QLabel *parent = 0);
+};
+
+
+class GmacsCompletion : public QListWidget {
+public:
+	QStringList completion_list;
+	GmacsMainWindow *main_window;
+	GmacsCompletion(QListWidget *parent = 0);
+	void setCompletionList(QStringList list);
+	bool existsWord(QString word);
+	void addList(QString str);
+	void dumpList(void);
+	void open(QTextCursor *cursor, QRect *rect);
+	void close(void);
+	void setPosition(int x, int y);
+	void keyPressEvent(QKeyEvent *event);
+};
 
 class GmacsToken {
 public:
@@ -116,8 +143,65 @@ public:
 	QString loadScript(QString);
 };
 
-class GmacsLineField;
+typedef void (GmacsKeyBind::*GmacsKeyBindFunc)(QTextCursor *);
+class GmacsKeyBind : public QObject {
+	Q_OBJECT;
+private:
+	void (GmacsKeyBind::*pressCTRLA)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLB)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLC)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLD)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLE)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLF)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLG)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLH)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLI)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLJ)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLK)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLL)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLM)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLN)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLO)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLP)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLQ)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLR)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLS)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLT)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLU)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLV)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLW)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLX)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLY)(QTextCursor *cursor);
+	void (GmacsKeyBind::*pressCTRLZ)(QTextCursor *cursor);
+	QString yank_buf;
+	int kill_buf_count;
+	int command_count;
+	GmacsKeyBindFunc *key_bind_list;
+	GmacsKeyBindFunc *command_bind_list;
+
+public:
+	GmacsKeyBind(void);
+	void bindKeys();
+	void bindCommands();
+	GmacsKeyBindFunc getKeyBindFunction(QKeyEvent *event);
+	void moveLineTop(QTextCursor *cursor);
+	void moveLineEnd(QTextCursor *cursor);
+	void moveLeft(QTextCursor *cursor);
+	void moveRight(QTextCursor *cursor);
+	void moveUp(QTextCursor *cursor);
+	void moveDown(QTextCursor *cursor);
+	void yankText(QTextCursor *cursor);
+	void addYankBuffer(QString buf);
+	void killText(QTextCursor *cursor);
+	void deleteChar(QTextCursor *cursor);
+	void startCommand(QTextCursor *cursor);
+	void findFile(QTextCursor *cursor);
+signals:
+	void emitFindFileSignal(void);
+};
+
 class GmacsTextField : public QTextEdit {
+	Q_OBJECT;
 	friend class GmacsLineField;
 	friend class GmacsHighlightThread;
 private:
@@ -136,44 +220,67 @@ private:
 	int command[3];
 	int command_count;
 	QTextCharFormat white;
+	GmacsScriptLoader *script_loader;
 
 public:
-	GmacsMainWindow *main_window;
-	GmacsCompletion *gc;
-	GmacsLineField *glf;
+	GmacsCompletion *comp;
+	GmacsKeyBind *kb;
+	bool isFindFileMode;
 	bool isFocus;
 	GmacsTextField(QTextEdit *parent = 0);
 	void paintEvent(QPaintEvent *event);
 	void drawCursor();
-	virtual void keyPressEvent(QKeyEvent *event);
+	void keyPressEvent(QKeyEvent *event);
 	void mousePressEvent(QMouseEvent *event);
 	void setModifier(QKeyEvent *event);
 	void resetModifier(void);
-	void pressA();
-	void pressE();
-	void pressF();
-	void pressB();
-	void pressN();
-	void pressP();
-	void pressD();
-	void pressK();
-	void pressX();
-	void pressY();
-	void addYankBuffer(QString buf);
 	void timerEvent(QTimerEvent *event);
+signals:
+	void focusToLine(void);
+public slots:
+	void grabFocus(void);
+	void findFile(void);
+	void loadText(QString filepath);
 };
 
-class GmacsLineField : public GmacsTextField {
+class GmacsLineField : public QTextEdit {
+	Q_OBJECT;
 private:
-	GmacsScriptLoader *script_loader;
+	bool isHighlightAll;
+	bool isPressedCtrl;
+	bool isPressedShift;
+	bool isPressedAlt;
+	bool isPressedCommand;
+	bool isCurVisible;
+	bool isKeyPress;
+	bool isOpenCompletionWindow;
+	QTextCursor cursor;
+	QString yank_buf;
+	int kill_buf_count;
+	GmacsSyntaxHighlighter *sh;
+	int command[3];
+	int command_count;
+	QTextCharFormat white;
 public:
-	GmacsTextField *gtf;
-	GmacsLineField(GmacsTextField *parent = 0);
+	GmacsKeyBind *kb;
+	bool isFindFileMode;
+	bool isFocus;
+
+	GmacsLineField(QTextEdit *parent = 0);
 	void keyPressEvent(QKeyEvent *event);
 	void paintEvent(QPaintEvent *event);
+	void drawCursor();
+	void setModifier(QKeyEvent *event);
+	void resetModifier(void);
+	void timerEvent(QTimerEvent *event);
 	void findFileMode();
 	QString readBuf();
 	void mousePressEvent(QMouseEvent *event);
+signals:
+	void focusToText(void);
+	void loadTextSignal(QString filepath);
+public slots:
+	void grabFocus(void);
 };
 
 class GmacsHighlightThread : public QThread {
