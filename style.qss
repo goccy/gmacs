@@ -1,0 +1,55 @@
+QScrollBar:vertical {
+    border: 1px solid gray;
+    width: 15px;
+    margin: 20px 0px 20px 0px;
+}
+
+QScrollBar::handle:vertical {
+	border-width:0px;
+	border-style:solid;
+	border-color:white;
+	background: qradialgradient(cx:0.5, cy:0.5, radius:1, fx:0.5, fy:0.5, stop:0 white, stop:1 #1e90ff);
+    /*background: qlineargradient(x1:0, y1:0.5, x2:1, y2:0.5, stop:0 white, stop: 0.2 gray, stop:0.5 green, stop: 0.8 gray, stop: 1.0 white);*/
+	border-radius: 6px;
+	min-height: 20px;
+}
+
+QScrollBar::sub-page:vertical {
+	background: white;
+	foreground: white;
+	border-width:5px;
+	border-style:solid;
+	border-top-left-radius: 30px;
+	border-top-right-radius: 30px;
+	border-color:white;
+	border-top-color:qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #696969, stop:1 white);
+	border-left-color:qlineargradient(x1:0, y1:1, x2:1, y2:1, stop:0 #696969, stop:1 white);
+}
+
+QScrollBar::add-page:vertical {
+	background: white;
+	foreground: white;
+	border-width:5px;
+	border-style:solid;
+	border-bottom-left-radius: 30px;
+	border-bottom-right-radius: 30px;
+	border-color:white;
+	border-bottom-color:qlineargradient(x1:0.5, y1:0, x2:0.5, y2:1, stop:0 #696969, stop:1 white);
+	border-left-color:qlineargradient(x1:0, y1:1, x2:1, y2:1, stop:0 #696969, stop:1 white);
+}
+
+QScrollBar::sub-line:vertical {
+    /*border: 2px solid grey;*/
+    background: white;
+    height: 20px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:vertical {
+    /*border: 2px solid grey;*/
+    background: white;
+    height: 20px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}

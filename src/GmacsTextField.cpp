@@ -3,12 +3,15 @@
 using namespace std;
 GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 {
-	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco");
+	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco;");
 	setLineWrapMode(QTextEdit::NoWrap);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setCursorWidth(0);
 	cursor = textCursor();
-	setTabStopWidth(4);
+	QFontMetrics metrics(font());
+	int space_size = metrics.width(' ');
+	fprintf(stderr, "space size = [%d]\n", space_size);
+	setTabStopWidth(space_size * 4);
 	setObjectName("GmacsTextField");
 	setTextCursor(cursor);
 	isFocus = true;
@@ -17,14 +20,9 @@ GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 	isFindFileMode = false;
 	const int blinkPeriod = 500;
 	startTimer(blinkPeriod);
-	sh = new GmacsSyntaxHighlighter();
+	sh = new GmacsSyntaxHighlighter(this);
 	GmacsScriptLoader *sl = new GmacsScriptLoader();
 	white.setForeground(Qt::white);
-	sh->addPreservedKeywordList(sl->preserved_keyword_list);
-	sh->setPreservedKeywordColor(sl->preserved_keyword_color);
-	sh->addTypeKeywordList(sl->type_keyword_list);
-	sh->setTypeKeywordColor(sl->type_keyword_color);
-	sh->initParser();
 	comp = new GmacsCompletion();
 	kb = new GmacsKeyBind();
 	script_loader = new GmacsScriptLoader();
@@ -118,7 +116,7 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 		break;
 	}
 	resetModifier();
-	sh->highlight(&cursor, width());
+	//sh->highlight(&cursor, width());
 	setTextCursor(cursor);
 }
 
@@ -175,18 +173,12 @@ void GmacsTextField::loadText(QString filepath)
 	cout << qPrintable(filepath) << endl;
 	QString buf = script_loader->loadScript(filepath);
 	cout << qPrintable(buf);
-	QTextDocument *document = new QTextDocument();
-	document->setPlainText(buf);
-	setDocument(document);
+	setPlainText(buf);
 	QTextCursor cur = textCursor();
 	cursor = cur;
-	sh->highlightAll(&cursor);
-	QStringList list = sh->getCompletionList();
-	comp->setCompletionList(list);
-	comp->dumpList();
-	//GmacsHighlightThread *th = new GmacsHighlightThread();
-	//th->gtf = gtf;
-	//th->start();
+	//QStringList list = sh->getCompletionList();
+	//comp->setCompletionList(list);
+	//comp->dumpList();
 	cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 	command_count = 0;
 	command[0] = 0;

@@ -158,5 +158,5 @@ GmacsHighlightThread::GmacsHighlightThread(QThread *parent) : QThread(parent)
 
 void GmacsHighlightThread::run()
 {
-	gtf->sh->highlightAll(&gtf->cursor);
+	//gtf->sh->highlightAll(&gtf->cursor);
 }

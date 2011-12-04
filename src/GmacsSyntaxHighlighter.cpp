@@ -1,5 +1,144 @@
 #include <gmacs.hpp>
 
+//GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextDocument *parent)
+GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
+	: QSyntaxHighlighter(parent)
+{
+	HighlightingRule rule;
+
+	const char *keywords[] = {
+		"while", "for", "if", "else", "switch",
+		"goto", "static", "OUT", "EOL", "assert",
+		"assure", "namespace", "link", "format",
+		"yield", "case", "default", "break", "do",
+		"try", "catch", "throw", "function", "extends",
+		"continue", "new", "class", "using", "include",
+		"foreach", "print", "return", "const",
+		"enum", "explicit", "friend", "inline", "operator",
+		"private", "public", "protected", "signals", "slots",
+		"struct", "template", "typedef", "typename", "union",
+		"virtual", "volatile",
+		NULL
+	};
+	keywordFormat.setForeground(QColor("#40e0d0"));
+	QStringList keywordPatterns;
+	for (int i = 0; keywords[i] != NULL; i++) {
+		keywordPatterns << "\\b" + QString(keywords[i]) + "\\b";
+	}
+
+	foreach (const QString &pattern, keywordPatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = keywordFormat;
+		highlightingRules.append(rule);
+	}
+
+	const char *types[] = {
+		"char", "double", "float", "int", "long", "signed", "unsigned",
+		"short", "void", "bool", "string", "Array", "Float", "boolean",
+		"Boolean", "Map", "dynamic", "InputStream", "OutputStream",
+		"Func", "Int",
+		NULL
+	};
+	typeFormat.setForeground(QColor("#ffaadd"));
+	QStringList typePatterns;
+	for (int i = 0; types[i] != NULL; i++) {
+		typePatterns << "\\b" + QString(types[i]) + "\\b";
+	}
+
+	QStringList valuePatterns;
+	for (int i = 0; types[i] != NULL; i++) {
+		valuePatterns << "\\b" + QString(types[i]) + "(\\s+[&*A-Za-z0-9_]+)\\b";
+	}
+
+	valueFormat.setForeground(QColor("#00ffff"));
+	foreach (const QString &pattern, valuePatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = valueFormat;
+		highlightingRules.append(rule);
+	}
+
+	foreach (const QString &pattern, typePatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = typeFormat;
+		highlightingRules.append(rule);
+	}
+
+	const char *operators[] = {
+		"&", "\\*", NULL
+	};
+
+	operatorFormat.setForeground(QColor("white"));
+	QStringList operatorPatterns;
+	for (int i = 0; operators[i] != NULL; i++) {
+		operatorPatterns << QString(operators[i]);
+	}
+
+	foreach (const QString &pattern, operatorPatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = operatorFormat;
+		highlightingRules.append(rule);
+	}
+	//classFormat.setFontWeight(QFont::Bold);
+	classFormat.setForeground(QColor("#ff69b4"));//Qt::darkMagenta);
+	rule.pattern = QRegExp("\\bQ[A-Za-z]+\\b");
+	rule.format = classFormat;
+	highlightingRules.append(rule);
+
+	//functionFormat.setFontItalic(true);
+	functionFormat.setForeground(QColor("#ff8c00"));
+	rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
+	rule.format = functionFormat;
+	highlightingRules.append(rule);
+
+	singleLineCommentFormat.setForeground(QColor("#808080"));
+	rule.pattern = QRegExp("//[^\n]*");
+	rule.format = singleLineCommentFormat;
+	highlightingRules.append(rule);
+
+	multiLineCommentFormat.setForeground(QColor("#808080"));
+
+	quotationFormat.setForeground(QColor("#00ff7f"));
+	rule.pattern = QRegExp("\"[^\"]*\"");
+	rule.format = quotationFormat;
+	highlightingRules.append(rule);
+
+	commentStartExpression = QRegExp("/\\*");
+	commentEndExpression = QRegExp("\\*/");
+}
+
+void GmacsSyntaxHighlighter::highlightBlock(const QString &text)
+{
+	foreach (const HighlightingRule &rule, highlightingRules) {
+		QRegExp expression(rule.pattern);
+		int index = expression.indexIn(text);
+		while (index >= 0) {
+			int length = expression.matchedLength();
+			setFormat(index, length, rule.format);
+			index = expression.indexIn(text, index + length);
+		}
+	}
+	setCurrentBlockState(0);
+
+	int startIndex = 0;
+	if (previousBlockState() != 1)
+		startIndex = commentStartExpression.indexIn(text);
+
+	while (startIndex >= 0) {
+		int endIndex = commentEndExpression.indexIn(text, startIndex);
+		int commentLength;
+		if (endIndex == -1) {
+			setCurrentBlockState(1);
+			commentLength = text.length() - startIndex;
+		} else {
+			commentLength = endIndex - startIndex
+				+ commentEndExpression.matchedLength();
+		}
+		setFormat(startIndex, commentLength, multiLineCommentFormat);
+		startIndex = commentStartExpression.indexIn(text, startIndex + commentLength);
+	}
+}
+
+/*
 using namespace std;
 GmacsSyntaxHighlighter::GmacsSyntaxHighlighter()
 {
@@ -324,3 +463,4 @@ QStringList GmacsSyntaxHighlighter::getCompletionList(void)
 {
 	return completion_list;
 }
+*/

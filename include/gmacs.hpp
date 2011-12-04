@@ -17,11 +17,10 @@ typedef enum {
 	ARROW_T,
 } GmacsWordType;
 
-class Gmacs {
+class Gmacs : public QApplication {
 public:
-	QApplication *app;
 	Gmacs(int argc, char **argv);
-	void start();
+	void start(void);
 };
 
 class GmacsMainWindow : public QMainWindow {
@@ -97,6 +96,7 @@ public:
 	void addType(QString type_name);
 };
 
+/*
 class GmacsSyntaxHighlighter {
 private:
 	GmacsTokenizer *gt;
@@ -130,6 +130,34 @@ public:
 	void highlightDefault(QTextCursor *cursor, GmacsToken *token);
 	void addCompletionList(GmacsToken **token);
 	QStringList getCompletionList(void);
+};
+*/
+
+struct HighlightingRule	{
+	QRegExp pattern;
+	QTextCharFormat format;
+};
+
+class GmacsSyntaxHighlighter : public QSyntaxHighlighter {
+	Q_OBJECT;
+private:
+	QVector<HighlightingRule> highlightingRules;
+	QRegExp commentStartExpression;
+	QRegExp commentEndExpression;
+	QTextCharFormat keywordFormat;
+	QTextCharFormat typeFormat;
+	QTextCharFormat valueFormat;
+	QTextCharFormat classFormat;
+	QTextCharFormat operatorFormat;
+	QTextCharFormat singleLineCommentFormat;
+	QTextCharFormat multiLineCommentFormat;
+	QTextCharFormat quotationFormat;
+	QTextCharFormat functionFormat;
+
+public:
+	GmacsSyntaxHighlighter(QTextEdit *parent = 0);
+protected:
+	void highlightBlock(const QString &text);
 };
 
 class GmacsScriptLoader {
