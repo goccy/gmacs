@@ -117,7 +117,6 @@ GmacsKeyBindFunc GmacsKeyBind::getKeyBindFunction(QKeyEvent *event)
 
 void GmacsKeyBind::moveLineTop(QTextCursor *cursor)
 {
-	fprintf(stderr, "moveLineTop\n");
 	kill_buf_count = 0;
 	command_count = 0;
 	cursor->movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
@@ -208,9 +207,6 @@ void GmacsKeyBind::startCommand(QTextCursor *cursor)
 void GmacsKeyBind::findFile(QTextCursor *cursor)
 {
 	(void)cursor;
-	//gtf->isFocus = false;
-	//gtf->isFindFileMode = true;
-	//gtf->releaseKeyboard();
 	emit emitFindFileSignal();
 	command_count = 0;
 }

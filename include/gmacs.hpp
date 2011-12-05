@@ -53,6 +53,28 @@ public:
 	GmacsCompleter(QTextEdit *editor);
 };
 
+typedef struct GmacsTypeObject {
+	QString type_name;
+	QStringList fields;
+	QStringList private_method_list;
+	QStringList public_method_list;
+} GmacsTypeObject;
+
+class GmacsPreprocessor {
+private:
+	QString document;
+	QList<GmacsTypeObject> typeobjs;
+public:
+	QStringList added_words;
+
+	GmacsPreprocessor(void);
+	void setMode(const QString &mode);
+	void setDocument(const QString &document);
+	void start(void);
+	void analyze(const QStringList &list, const QRegExp &expression);
+	void traverseTypeObject(const QStringList &list, int start_idx);
+};
+
 /*
 class GmacsCompleter : public QListWidget {
 public:
@@ -159,9 +181,9 @@ private:
 	QTextCharFormat multiLineCommentFormat;
 	QTextCharFormat quotationFormat;
 	QTextCharFormat functionFormat;
-
 public:
 	GmacsSyntaxHighlighter(QTextEdit *parent = 0);
+	void addTypes(const QStringList &types);
 protected:
 	void highlightBlock(const QString &text);
 };

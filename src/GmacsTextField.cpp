@@ -78,6 +78,7 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	if (event->modifiers() == Qt::META) {
 		GmacsKeyBindFunc func = kb->getKeyBindFunction(event);
 		if (func != NULL) {
+			fprintf(stderr, "CTRL+key\n");
 			(kb->*func)(&cursor);
 			setTextCursor(cursor);
 		}
@@ -126,16 +127,13 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	QString completionPrefix = textUnderCursor();
 	if (!isShortcut && (hasModifier || event->text().isEmpty() ||
 						completionPrefix.length() < 3 || eow.contains(event->text().right(1)))) {
-		fprintf(stderr, "hide\n");
 		c->popup()->hide();
 		return;
 	}
-	qDebug() << completionPrefix;
 	if (completionPrefix != c->completionPrefix()) {
 		c->setCompletionPrefix(completionPrefix);
 		c->popup()->setCurrentIndex(c->completionModel()->index(0, 0));
 	}
-
 	QRect cr = cursorRect();
 	cr.setWidth(c->popup()->sizeHintForColumn(0) + c->popup()->verticalScrollBar()->sizeHint().width());
 	c->complete(cr); // popup it up!
@@ -177,7 +175,10 @@ void GmacsTextField::loadText(QString filepath)
 {
 	//cout << qPrintable(filepath) << endl;
 	QString buf = script_loader->loadScript(filepath);
-	//cout << qPrintable(buf);
+	GmacsPreprocessor cpp;
+	cpp.setDocument(buf);
+	cpp.start();
+	sh->addTypes(cpp.added_words);
 	setPlainText(buf);
 	QTextCursor cur = textCursor();
 	cursor = cur;

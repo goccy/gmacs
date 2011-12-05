@@ -45,6 +45,12 @@ GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
 		typePatterns << "\\b" + QString(types[i]) + "\\b";
 	}
 
+	//classFormat.setFontWeight(QFont::Bold);
+	classFormat.setForeground(QColor("#ffaadd"));//Qt::darkMagenta);
+	rule.pattern = QRegExp("\\bQ[A-Za-z]+\\b");
+	rule.format = classFormat;
+	highlightingRules.append(rule);
+
 	QStringList valuePatterns;
 	for (int i = 0; types[i] != NULL; i++) {
 		valuePatterns << "\\b" + QString(types[i]) + "(\\s+[&*A-Za-z0-9_]+)\\b";
@@ -78,11 +84,6 @@ GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
 		rule.format = operatorFormat;
 		highlightingRules.append(rule);
 	}
-	//classFormat.setFontWeight(QFont::Bold);
-	classFormat.setForeground(QColor("#ff69b4"));//Qt::darkMagenta);
-	rule.pattern = QRegExp("\\bQ[A-Za-z]+\\b");
-	rule.format = classFormat;
-	highlightingRules.append(rule);
 
 	//functionFormat.setFontItalic(true);
 	functionFormat.setForeground(QColor("#ff8c00"));
@@ -104,6 +105,39 @@ GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
 
 	commentStartExpression = QRegExp("/\\*");
 	commentEndExpression = QRegExp("\\*/");
+}
+
+void GmacsSyntaxHighlighter::addTypes(const QStringList &types)
+{
+	HighlightingRule rule;
+	QStringList valuePatterns;
+	foreach (const QString &type, types) {
+		valuePatterns << "\\b" + type + "(\\s+[&*A-Za-z0-9_]+)\\b";
+	}
+	valueFormat.setForeground(QColor("#00ffff"));
+	foreach (const QString &pattern, valuePatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = valueFormat;
+		highlightingRules.append(rule);
+	}
+	foreach (const QString &type, types) {
+		rule.pattern = QRegExp("\\b" + type + "\\b");
+		rule.format = classFormat;
+		highlightingRules.append(rule);
+	}
+	const char *operators[] = {
+		"&", "\\*", NULL
+	};
+	operatorFormat.setForeground(QColor("white"));
+	QStringList operatorPatterns;
+	for (int i = 0; operators[i] != NULL; i++) {
+		operatorPatterns << QString(operators[i]);
+	}
+	foreach (const QString &pattern, operatorPatterns) {
+		rule.pattern = QRegExp(pattern);
+		rule.format = operatorFormat;
+		highlightingRules.append(rule);
+	}
 }
 
 void GmacsSyntaxHighlighter::highlightBlock(const QString &text)
