@@ -9,7 +9,7 @@ GmacsMainWindow::GmacsMainWindow(QMainWindow *parent) : QMainWindow(parent)
 
 void GmacsMainWindow::setMainField(GmacsMainField *main)
 {
-	GmacsCompletion *comp = main->text->comp;
-	comp->main_window = this;//for window pos
+	//GmacsCompletion *comp = main->text->comp;
+	//comp->main_window = this;//for window pos
 	setCentralWidget(main);
 }

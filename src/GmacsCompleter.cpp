@@ -1,5 +1,18 @@
 #include <gmacs.hpp>
 
+GmacsCompleter::GmacsCompleter(QTextEdit *editor) : QCompleter()
+{
+	//setModelSorting(QCompleter::CaseInsensitivelySortedModel);
+	//setCaseSensitivity(Qt::CaseInsensitive);
+	setWrapAround(false);
+	setMaxVisibleItems(20);
+	setCompletionMode(QCompleter::PopupCompletion);
+	setWidget(editor);
+	QObject::connect(this, SIGNAL(activated(QString)),
+					 editor, SLOT(insertCompletion(QString)));
+}
+
+/*
 GmacsCompletion::GmacsCompletion(QListWidget *parent) : QListWidget(parent)
 {
 	setWindowFlags(Qt::Popup);
@@ -116,3 +129,4 @@ void GmacsCompletion::close(void)
 	//gtf->grabKeyboard();
 	this->hide();
 }
+*/

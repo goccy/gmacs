@@ -1,7 +1,7 @@
 QScrollBar:vertical {
     border: 1px solid gray;
     width: 15px;
-    margin: 20px 0px 20px 0px;
+    margin: 0px 0px 40px 0px;
 }
 
 QScrollBar::handle:vertical {
@@ -42,14 +42,31 @@ QScrollBar::sub-line:vertical {
     /*border: 2px solid grey;*/
     background: white;
     height: 20px;
-    subcontrol-position: top;
-    subcontrol-origin: margin;
+	position:relative;
+    subcontrol-position: bottom;
+	subcontrol-origin: margin;
+	top:-20px;
 }
 
 QScrollBar::add-line:vertical {
     /*border: 2px solid grey;*/
     background: white;
     height: 20px;
-    subcontrol-position: bottom;
+	position:relative;
+	subcontrol-position: bottom;
     subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:vertical {
+	image: url(images/up-arrow.png);
+	height:20px;
+	width:15px;
+	border: 1px solid grey;
+}
+
+QScrollBar::down-arrow:vertical {
+	image: url(images/down-arrow.png);
+	height:20px;
+	width:15px;
+	border: 1px solid grey;
 }

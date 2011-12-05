@@ -48,8 +48,13 @@ public:
 	GmacsStatusBar(QLabel *parent = 0);
 };
 
+class GmacsCompleter : public QCompleter {
+public:
+	GmacsCompleter(QTextEdit *editor);
+};
 
-class GmacsCompletion : public QListWidget {
+/*
+class GmacsCompleter : public QListWidget {
 public:
 	QStringList completion_list;
 	GmacsMainWindow *main_window;
@@ -63,6 +68,7 @@ public:
 	void setPosition(int x, int y);
 	void keyPressEvent(QKeyEvent *event);
 };
+*/
 
 class GmacsToken {
 public:
@@ -234,10 +240,6 @@ class GmacsTextField : public QTextEdit {
 	friend class GmacsHighlightThread;
 private:
 	bool isHighlightAll;
-	bool isPressedCtrl;
-	bool isPressedShift;
-	bool isPressedAlt;
-	bool isPressedCommand;
 	bool isCurVisible;
 	bool isKeyPress;
 	bool isOpenCompletionWindow;
@@ -245,13 +247,14 @@ private:
 	QString yank_buf;
 	int kill_buf_count;
 	GmacsSyntaxHighlighter *sh;
+	GmacsCompleter *c;
 	int command[3];
 	int command_count;
 	QTextCharFormat white;
 	GmacsScriptLoader *script_loader;
 
 public:
-	GmacsCompletion *comp;
+	//GmacsCompletion *comp;
 	GmacsKeyBind *kb;
 	bool isFindFileMode;
 	bool isFocus;
@@ -260,15 +263,16 @@ public:
 	void drawCursor();
 	void keyPressEvent(QKeyEvent *event);
 	void mousePressEvent(QMouseEvent *event);
-	void setModifier(QKeyEvent *event);
-	void resetModifier(void);
 	void timerEvent(QTimerEvent *event);
+	void focusInEvent(QFocusEvent *event);
+	QString textUnderCursor(void) const;
 signals:
 	void focusToLine(void);
 public slots:
 	void grabFocus(void);
 	void findFile(void);
 	void loadText(QString filepath);
+	void insertCompletion(const QString &completion);
 };
 
 class GmacsLineField : public QTextEdit {
