@@ -56,6 +56,14 @@ public:
 	GmacsMainField(QWidget *parent = 0);
 };
 
+class GmacsLineNumberArea : public QWidget {
+public:
+	GmacsTextField *edit_area;
+	GmacsLineNumberArea(GmacsTextField *parent);
+	QSize sizeHint(void) const;
+	void paintEvent(QPaintEvent *event);
+};
+
 class GmacsStatusBar : public QLabel {
 public:
 	GmacsStatusBar(QLabel *parent = 0);
@@ -63,7 +71,7 @@ public:
 
 class GmacsCompleter : public QCompleter {
 public:
-	GmacsCompleter(QTextEdit *editor);
+	GmacsCompleter(QPlainTextEdit *editor);
 };
 
 typedef struct GmacsTypeObject {
@@ -196,7 +204,7 @@ private:
 	QTextCharFormat quotationFormat;
 	QTextCharFormat functionFormat;
 public:
-	GmacsSyntaxHighlighter(QTextEdit *parent = 0);
+	GmacsSyntaxHighlighter(QTextDocument *parent = 0);
 	void addTypes(const QStringList &types);
 protected:
 	void highlightBlock(const QString &text);
@@ -270,7 +278,7 @@ signals:
 	void emitFindFileSignal(void);
 };
 
-class GmacsTextField : public QTextEdit {
+class GmacsTextField : public QPlainTextEdit {//public QTextEdit {
 	Q_OBJECT;
 	friend class GmacsLineField;
 	friend class GmacsHighlightThread;
@@ -284,18 +292,23 @@ private:
 	int kill_buf_count;
 	GmacsSyntaxHighlighter *sh;
 	GmacsCompleter *c;
+	GmacsLineNumberArea *line_number_area;
 	int command[3];
 	int command_count;
 	QTextCharFormat white;
 	GmacsScriptLoader *script_loader;
 
 public:
-	//GmacsCompletion *comp;
 	GmacsKeyBind *kb;
 	bool isFindFileMode;
 	bool isFocus;
-	GmacsTextField(QTextEdit *parent = 0);
+	GmacsTextField(QPlainTextEdit *parent = 0);
+    void lineNumberAreaPaintEvent(QPaintEvent *event);
+    int lineNumberAreaWidth(void);
+	//bool event(QEvent *event);
+	//void scrollContentsBy(int dx, int dy);
 	void paintEvent(QPaintEvent *event);
+    void resizeEvent(QResizeEvent *event);
 	void drawCursor();
 	void keyPressEvent(QKeyEvent *event);
 	void mousePressEvent(QMouseEvent *event);
@@ -304,14 +317,17 @@ public:
 	QString textUnderCursor(void) const;
 signals:
 	void focusToLine(void);
+	//void updateRequest(const QRect &rect, int dy);
 public slots:
 	void grabFocus(void);
 	void findFile(void);
 	void loadText(QString filepath);
 	void insertCompletion(const QString &completion);
+    void updateLineNumberAreaWidth(int newBlockCount);
+    void updateLineNumberArea(const QRect &, int);
 };
 
-class GmacsLineField : public QTextEdit {
+class GmacsLineField : public QPlainTextEdit {
 	Q_OBJECT;
 private:
 	bool isHighlightAll;
@@ -335,7 +351,7 @@ public:
 	bool isFindFileMode;
 	bool isFocus;
 
-	GmacsLineField(QTextEdit *parent = 0);
+	GmacsLineField(QPlainTextEdit *parent = 0);
 	void keyPressEvent(QKeyEvent *event);
 	void focusInEvent(QFocusEvent *event);
 	QString textUnderCursor(void) const;

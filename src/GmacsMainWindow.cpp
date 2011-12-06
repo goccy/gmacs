@@ -26,14 +26,14 @@ void GmacsMainWindow::keyPressEvent(QKeyEvent *event)
 		//fprintf(stderr, "cur_tab_idx = [%d]\n", cur_tab_idx);
 		switch (event->key()) {
 		case Qt::Key_BracketRight:
-			//switch right tab
 			if (tab_max_num - 1 > cur_tab_idx) {
+				//fprintf(stderr, "switch right tab\n");
 				tab->setCurrentIndex(cur_tab_idx+1);
 			}
 			break;
 		case Qt::Key_BracketLeft:
-			//switch left tab
 			if (cur_tab_idx > 0) {
+				//fprintf(stderr, "switch left tab\n");
 				tab->setCurrentIndex(cur_tab_idx-1);
 			}
 			break;

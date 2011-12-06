@@ -1,10 +1,10 @@
 #include <gmacs.hpp>
 
 using namespace std;
-GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
+GmacsTextField::GmacsTextField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 {
 	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco;");
-	setLineWrapMode(QTextEdit::NoWrap);
+	setLineWrapMode(QPlainTextEdit::NoWrap);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setCursorWidth(0);
 	cursor = textCursor();
@@ -20,14 +20,75 @@ GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 	isFindFileMode = false;
 	const int blinkPeriod = 500;
 	startTimer(blinkPeriod);
-	sh = new GmacsSyntaxHighlighter(this);
+	sh = new GmacsSyntaxHighlighter(document());
 	c = new GmacsCompleter(this);
-	GmacsScriptLoader *sl = new GmacsScriptLoader();
 	white.setForeground(Qt::white);
-	//comp = new GmacsCompletion();
+	line_number_area = new GmacsLineNumberArea(this);
+    connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
+    connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
+    updateLineNumberAreaWidth(0);
 	kb = new GmacsKeyBind();
 	script_loader = new GmacsScriptLoader();
 	connect(kb, SIGNAL(emitFindFileSignal()), this, SLOT(findFile()));
+}
+
+int GmacsTextField::lineNumberAreaWidth(void)
+{
+    int digits = 1;
+    int max = qMax(1, document()->blockCount());
+    while (max >= 10) {
+        max /= 10;
+        ++digits;
+    }
+    int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+    return space;
+}
+
+void GmacsTextField::updateLineNumberAreaWidth(int block_count)
+{
+	(void)block_count;
+	int width = lineNumberAreaWidth();
+    setViewportMargins(width, 0, 0, 0);
+}
+
+void GmacsTextField::updateLineNumberArea(const QRect &rect, int dy)
+{
+    if (dy) {
+        line_number_area->scroll(0, dy);
+	} else {
+        line_number_area->update(0, rect.y(), line_number_area->width(), rect.height());
+	}
+    if (rect.contains(viewport()->rect())) {
+        updateLineNumberAreaWidth(0);
+	}
+}
+
+void GmacsTextField::resizeEvent(QResizeEvent *event)
+{
+    QPlainTextEdit::resizeEvent(event);
+    QRect cr = contentsRect();
+    line_number_area->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+}
+
+void GmacsTextField::lineNumberAreaPaintEvent(QPaintEvent *event)
+{
+    QPainter painter(line_number_area);
+    painter.fillRect(event->rect(), Qt::lightGray);
+    QTextBlock block = firstVisibleBlock();
+    int blockNumber = block.blockNumber();
+    int top = (int)blockBoundingGeometry(block).translated(contentOffset()).top();
+    int bottom = top + (int)blockBoundingRect(block).height();
+    while (block.isValid() && top <= event->rect().bottom()) {
+        if (block.isVisible() && bottom >= event->rect().top()) {
+            QString number = QString::number(blockNumber + 1);
+            painter.setPen(Qt::black);
+            painter.drawText(0, top, line_number_area->width(), fontMetrics().height(), Qt::AlignRight, number);
+        }
+        block = block.next();
+        top = bottom;
+        bottom = top + (int)blockBoundingRect(block).height();
+        ++blockNumber;
+    }
 }
 
 void GmacsTextField::insertCompletion(const QString& completion)
@@ -44,6 +105,7 @@ void GmacsTextField::insertCompletion(const QString& completion)
 
 void GmacsTextField::timerEvent(QTimerEvent *event)
 {
+	(void)event;
 	if (isCurVisible) {
 		isCurVisible = false;
 	} else {
@@ -59,7 +121,7 @@ void GmacsTextField::paintEvent(QPaintEvent *event)
 		drawCursor();
 	}
 	setCursorWidth(0);
-	QTextEdit::paintEvent(event);
+	QPlainTextEdit::paintEvent(event);
 	setCursorWidth(10);
 	if (isFocus && (isKeyPress || isCurVisible) ||
 		isHighlightAll) {
@@ -131,7 +193,7 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 		//cursor.insertText(event->text());
 		//setTextCursor(cursor);
 		command_count = 0;
-		QTextEdit::keyPressEvent(event);
+		QPlainTextEdit::keyPressEvent(event);
 		break;
 	}
 	bool isShortcut = ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_U); // CTRL+U
@@ -165,7 +227,7 @@ QString GmacsTextField::textUnderCursor(void) const
 void GmacsTextField::focusInEvent(QFocusEvent *e)
 {
 	if (c) c->setWidget(this);
-	QTextEdit::focusInEvent(e);
+	QPlainTextEdit::focusInEvent(e);
 }
 
 void GmacsTextField::mousePressEvent(QMouseEvent *event)
@@ -194,7 +256,8 @@ void GmacsTextField::loadText(QString filepath)
 	cpp.setDocument(buf);
 	cpp.start();
 	sh->addTypes(cpp.added_words);
-	setPlainText(buf);
+	QTextDocument *doc = document();
+	doc->setPlainText(buf);
 	QTextCursor cur = textCursor();
 	cursor = cur;
 	QStringList words;

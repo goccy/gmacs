@@ -1,6 +1,6 @@
 #include <gmacs.hpp>
 
-GmacsCompleter::GmacsCompleter(QTextEdit *editor) : QCompleter()
+GmacsCompleter::GmacsCompleter(QPlainTextEdit *editor) : QCompleter()
 {
 	//setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 	//setCaseSensitivity(Qt::CaseInsensitive);

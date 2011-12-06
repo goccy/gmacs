@@ -1,7 +1,7 @@
 #include <gmacs.hpp>
 
 //GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextDocument *parent)
-GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
+GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextDocument *parent)
 	: QSyntaxHighlighter(parent)
 {
 	HighlightingRule rule;
@@ -147,6 +147,7 @@ void GmacsSyntaxHighlighter::addTypes(const QStringList &types)
 
 void GmacsSyntaxHighlighter::highlightBlock(const QString &text)
 {
+	fprintf(stderr, "highlightBlock\n");
 	foreach (const HighlightingRule &rule, highlightingRules) {
 		QRegExp expression(rule.pattern);
 		int index = expression.indexIn(text);

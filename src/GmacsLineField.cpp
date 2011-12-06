@@ -2,7 +2,7 @@
 
 using namespace std;
 
-GmacsLineField::GmacsLineField(QTextEdit *parent) : QTextEdit(parent)
+GmacsLineField::GmacsLineField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 {
 	setStyleSheet("background-color:black;" "color:white;" "font-family: monaco");
 	setMinimumSize(QSize(50, 30));
@@ -113,7 +113,7 @@ QString GmacsLineField::textUnderCursor(void) const
 void GmacsLineField::focusInEvent(QFocusEvent *e)
 {
 	if (c) c->setWidget(this);
-	QTextEdit::focusInEvent(e);
+	QPlainTextEdit::focusInEvent(e);
 }
 
 void GmacsLineField::paintEvent(QPaintEvent *event)
@@ -122,7 +122,7 @@ void GmacsLineField::paintEvent(QPaintEvent *event)
 		drawCursor();
 	}
 	setCursorWidth(0);
-	QTextEdit::paintEvent(event);
+	QPlainTextEdit::paintEvent(event);
 	setCursorWidth(10);
 }
 
