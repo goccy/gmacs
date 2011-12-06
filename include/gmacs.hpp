@@ -23,24 +23,37 @@ public:
 	void start(void);
 };
 
-class GmacsMainWindow : public QMainWindow {
+class GmacsMainWindow : public QWidget {
 	Q_OBJECT;
 public:
-    GmacsMainWindow(QMainWindow *parent = 0);
-	void setMainField(GmacsMainField *main);
+	GmacsTabWidget *tab;
+	GmacsWidget *widget;
+    GmacsMainWindow(QWidget *parent = 0);
+	void addTab(void);
+	void keyPressEvent(QKeyEvent *event);
+};
+
+class GmacsWidget : public QWidget {
+	Q_OBJECT;
+public:
+	GmacsMainField *main_field;
+	GmacsLineField *command_area;
+	GmacsWidget(QWidget *parent);
+};
+
+class GmacsTabWidget : public QTabWidget {
+public:
+	GmacsTabWidget(QWidget *parent);
 };
 
 class GmacsMainField : public QWidget {
 	Q_OBJECT;
 	QVBoxLayout *layout;
 public:
-	GmacsTextField *text;
-	GmacsStatusBar *bar;
-	GmacsLineField *line;
+	GmacsTextField *edit_area;
+	GmacsStatusBar *status_bar;
 
 	GmacsMainField(QWidget *parent = 0);
-	void addWidget(QWidget *widget);
-	void setConnect(void);
 };
 
 class GmacsStatusBar : public QLabel {
@@ -177,6 +190,7 @@ private:
 	QTextCharFormat valueFormat;
 	QTextCharFormat classFormat;
 	QTextCharFormat operatorFormat;
+	QTextCharFormat tabFormat;
 	QTextCharFormat singleLineCommentFormat;
 	QTextCharFormat multiLineCommentFormat;
 	QTextCharFormat quotationFormat;
@@ -317,11 +331,14 @@ private:
 	QTextCharFormat white;
 public:
 	GmacsKeyBind *kb;
+	GmacsCompleter *c;
 	bool isFindFileMode;
 	bool isFocus;
 
 	GmacsLineField(QTextEdit *parent = 0);
 	void keyPressEvent(QKeyEvent *event);
+	void focusInEvent(QFocusEvent *event);
+	QString textUnderCursor(void) const;
 	void paintEvent(QPaintEvent *event);
 	void drawCursor();
 	void setModifier(QKeyEvent *event);
@@ -335,6 +352,7 @@ signals:
 	void loadTextSignal(QString filepath);
 public slots:
 	void grabFocus(void);
+	void insertCompletion(const QString &completion);
 };
 
 class GmacsHighlightThread : public QThread {

@@ -19,8 +19,25 @@ GmacsLineField::GmacsLineField(QTextEdit *parent) : QTextEdit(parent)
 	isPressedAlt = false;
 	isPressedCommand = false;
 	white.setForeground(Qt::white);
+	c = new GmacsCompleter(this);
+	QFileSystemModel *model = new QFileSystemModel(c);
+	model->setRootPath(QDir::currentPath());
+	c->setModel(model);
+	kb = new GmacsKeyBind();
 	const int blinkPeriod = 500;
 	startTimer(blinkPeriod);
+}
+
+void GmacsLineField::insertCompletion(const QString& completion)
+{
+	fprintf(stderr, "insertCompletion!!\n");
+	if (c->widget() != this) return;
+	QTextCursor tc = textCursor();
+	int extra = completion.length() - c->completionPrefix().length();
+	tc.movePosition(QTextCursor::Left);
+	tc.movePosition(QTextCursor::EndOfWord);
+	tc.insertText(completion.right(extra));
+	setTextCursor(tc);
 }
 
 void GmacsLineField::keyPressEvent(QKeyEvent *event)
@@ -29,7 +46,16 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 	//cout << event->key() << endl;
 	//cout << event->modifiers() << endl;
 	isKeyPress = true;
-	setModifier(event);
+	if (event->modifiers() == Qt::META) {
+		GmacsKeyBindFunc func = kb->getKeyBindFunction(event);
+		if (func != NULL) {
+			fprintf(stderr, "CTRL+key\n");
+			(kb->*func)(&cursor);
+			setTextCursor(cursor);
+		}
+		kill_buf_count = 0;
+		command_count = 0;
+	}
 	switch (event->key()) {
 	case Qt::Key_Backspace:
 		kill_buf_count = 0;
@@ -55,7 +81,39 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 		setTextCursor(cursor);
 		break;
 	}
-	resetModifier();
+
+	bool isShortcut = ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_U); // CTRL+U
+	const bool ctrlOrShift = event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier);
+	if (!c || (ctrlOrShift && event->text().isEmpty())) return;
+	static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
+	bool hasModifier = (event->modifiers() != Qt::NoModifier) && !ctrlOrShift;
+	QString completionPrefix = textUnderCursor();
+	if (!isShortcut && (hasModifier || event->text().isEmpty() ||
+						completionPrefix.length() < 3 || eow.contains(event->text().right(1)))) {
+		c->popup()->hide();
+		return;
+	}
+	qDebug() << completionPrefix;
+	if (completionPrefix != c->completionPrefix()) {
+		c->setCompletionPrefix(completionPrefix);
+		c->popup()->setCurrentIndex(c->completionModel()->index(0, 0));
+	}
+	QRect cr = cursorRect();
+	cr.setWidth(c->popup()->sizeHintForColumn(0) + c->popup()->verticalScrollBar()->sizeHint().width());
+	c->complete(cr); // popup it up!
+}
+
+QString GmacsLineField::textUnderCursor(void) const
+{
+	QTextCursor tc = textCursor();
+	tc.select(QTextCursor::WordUnderCursor);
+	return tc.selectedText();
+}
+
+void GmacsLineField::focusInEvent(QFocusEvent *e)
+{
+	if (c) c->setWidget(this);
+	QTextEdit::focusInEvent(e);
 }
 
 void GmacsLineField::paintEvent(QPaintEvent *event)

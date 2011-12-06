@@ -10,7 +10,7 @@ GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 	cursor = textCursor();
 	QFontMetrics metrics(font());
 	int space_size = metrics.width(' ');
-	fprintf(stderr, "space size = [%d]\n", space_size);
+	//fprintf(stderr, "space size = [%d]\n", space_size);
 	setTabStopWidth(space_size * 4);
 	setObjectName("GmacsTextField");
 	setTextCursor(cursor);
@@ -32,7 +32,7 @@ GmacsTextField::GmacsTextField(QTextEdit *parent) : QTextEdit(parent)
 
 void GmacsTextField::insertCompletion(const QString& completion)
 {
-	fprintf(stderr, "insertCompletion!!\n");
+	//fprintf(stderr, "insertCompletion!!\n");
 	if (c->widget() != this) return;
 	QTextCursor tc = textCursor();
 	int extra = completion.length() - c->completionPrefix().length();
@@ -61,6 +61,21 @@ void GmacsTextField::paintEvent(QPaintEvent *event)
 	setCursorWidth(0);
 	QTextEdit::paintEvent(event);
 	setCursorWidth(10);
+	if (isFocus && (isKeyPress || isCurVisible) ||
+		isHighlightAll) {
+		QPainter painter(viewport());
+		painter.setOpacity(1);
+		QPen pen(Qt::black);
+		painter.setPen(pen);
+		QFont font("monaco");
+		font.setPointSize(15);
+		font.setFixedPitch(true);
+		font.setBold(false);
+		painter.setFont(font);
+		QRect r = cursorRect();
+		QChar ch = document()->characterAt(textCursor().position());
+		painter.drawText(QPoint(r.x(), r.y() + 16), ch);
+	}
 }
 
 void GmacsTextField::drawCursor()
@@ -78,7 +93,7 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	if (event->modifiers() == Qt::META) {
 		GmacsKeyBindFunc func = kb->getKeyBindFunction(event);
 		if (func != NULL) {
-			fprintf(stderr, "CTRL+key\n");
+			//fprintf(stderr, "CTRL+key\n");
 			(kb->*func)(&cursor);
 			setTextCursor(cursor);
 		}
@@ -113,12 +128,12 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	default:
 		isOpenCompletionWindow = false;
 		kill_buf_count = 0;
-		cursor.insertText(event->text());
-		setTextCursor(cursor);
+		//cursor.insertText(event->text());
+		//setTextCursor(cursor);
 		command_count = 0;
+		QTextEdit::keyPressEvent(event);
 		break;
 	}
-
 	bool isShortcut = ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_U); // CTRL+U
 	const bool ctrlOrShift = event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier);
 	if (!c || (ctrlOrShift && event->text().isEmpty())) return;

@@ -34,7 +34,7 @@ GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
 
 	const char *types[] = {
 		"char", "double", "float", "int", "long", "signed", "unsigned",
-		"short", "void", "bool", "string", "Array", "Float", "boolean",
+		"short", "void", "bool", "String", "string", "Array", "Float", "boolean",
 		"Boolean", "Map", "dynamic", "InputStream", "OutputStream",
 		"Func", "Int",
 		NULL
@@ -89,6 +89,11 @@ GmacsSyntaxHighlighter::GmacsSyntaxHighlighter(QTextEdit *parent)
 	functionFormat.setForeground(QColor("#ff8c00"));
 	rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
 	rule.format = functionFormat;
+	highlightingRules.append(rule);
+
+	tabFormat.setBackground(QColor(0xff, 0xff, 0xff, 0x66));
+	rule.pattern = QRegExp("\t");
+	rule.format = tabFormat;
 	highlightingRules.append(rule);
 
 	singleLineCommentFormat.setForeground(QColor("#808080"));

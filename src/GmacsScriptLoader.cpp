@@ -30,7 +30,7 @@ QString GmacsScriptLoader::loadScript(QString filepath)
 {
 	QString script = "";
 	QFile textFile(filepath);
-	if (textFile.open(QIODevice::ReadWrite)) { 
+	if (textFile.open(QIODevice::ReadOnly)) {
 		QTextStream input(&textFile);
 		script = input.readAll();
 		textFile.close();
