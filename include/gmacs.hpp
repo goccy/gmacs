@@ -305,8 +305,6 @@ public:
 	GmacsTextField(QPlainTextEdit *parent = 0);
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth(void);
-	//bool event(QEvent *event);
-	//void scrollContentsBy(int dx, int dy);
 	void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 	void drawCursor();
@@ -317,7 +315,6 @@ public:
 	QString textUnderCursor(void) const;
 signals:
 	void focusToLine(void);
-	//void updateRequest(const QRect &rect, int dy);
 public slots:
 	void grabFocus(void);
 	void findFile(void);
@@ -325,6 +322,7 @@ public slots:
 	void insertCompletion(const QString &completion);
     void updateLineNumberAreaWidth(int newBlockCount);
     void updateLineNumberArea(const QRect &, int);
+	void updateViewingPosition(int min, int max);
 };
 
 class GmacsLineField : public QPlainTextEdit {

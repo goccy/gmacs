@@ -147,7 +147,6 @@ void GmacsSyntaxHighlighter::addTypes(const QStringList &types)
 
 void GmacsSyntaxHighlighter::highlightBlock(const QString &text)
 {
-	fprintf(stderr, "highlightBlock\n");
 	foreach (const HighlightingRule &rule, highlightingRules) {
 		QRegExp expression(rule.pattern);
 		int index = expression.indexIn(text);

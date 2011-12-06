@@ -26,6 +26,8 @@ GmacsTextField::GmacsTextField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 	line_number_area = new GmacsLineNumberArea(this);
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
     connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
+	QScrollBar *vertical_scroll_bar = verticalScrollBar();
+	connect(vertical_scroll_bar, SIGNAL(rangeChanged(int,int)), this, SLOT(updateViewingPosition(int, int)));
     updateLineNumberAreaWidth(0);
 	kb = new GmacsKeyBind();
 	script_loader = new GmacsScriptLoader();
@@ -42,6 +44,14 @@ int GmacsTextField::lineNumberAreaWidth(void)
     }
     int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
     return space;
+}
+
+void GmacsTextField::updateViewingPosition(int min, int max)
+{
+	if (max > 0) {
+		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor);
+		setTextCursor(cursor);
+	}
 }
 
 void GmacsTextField::updateLineNumberAreaWidth(int block_count)
@@ -280,6 +290,7 @@ void GmacsTextField::loadText(QString filepath)
 	}
 	c->setModel(new QStringListModel(words, c));
 	cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+	setTextCursor(cursor);
 	command_count = 0;
 	command[0] = 0;
 	command[1] = 0;
