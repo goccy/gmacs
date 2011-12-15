@@ -46,7 +46,7 @@ void GmacsKeyBind::bindKeys(void)
 	BIND_KEY(CTRLD, &GmacsKeyBind::deleteChar);
 	BIND_KEY(CTRLE, &GmacsKeyBind::moveLineEnd);
 	BIND_KEY(CTRLF, &GmacsKeyBind::moveRight);
-	BIND_KEY(CTRLG, NULL);
+	BIND_KEY(CTRLG, &GmacsKeyBind::clearCommand);
 	BIND_KEY(CTRLH, NULL);
 	BIND_KEY(CTRLI, NULL);
 	BIND_KEY(CTRLJ, NULL);
@@ -76,7 +76,7 @@ void GmacsKeyBind::bindCommands(void)
 	BIND_COMMAND(CTRLD, NULL);
 	BIND_COMMAND(CTRLE, NULL);
 	BIND_COMMAND(CTRLF, &GmacsKeyBind::findFile);
-	BIND_COMMAND(CTRLG, NULL);
+	BIND_COMMAND(CTRLG, &GmacsKeyBind::clearCommand);
 	BIND_COMMAND(CTRLH, NULL);
 	BIND_COMMAND(CTRLI, NULL);
 	BIND_COMMAND(CTRLJ, NULL);
@@ -113,6 +113,12 @@ GmacsKeyBindFunc GmacsKeyBind::getKeyBindFunction(QKeyEvent *event)
 		}
 	}
 	return func;
+}
+
+void GmacsKeyBind::clearCommand(QTextCursor *cursor)
+{
+	kill_buf_count = 0;
+	command_count = 0;
 }
 
 void GmacsKeyBind::moveLineTop(QTextCursor *cursor)

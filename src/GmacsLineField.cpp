@@ -20,8 +20,11 @@ GmacsLineField::GmacsLineField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 	isPressedCommand = false;
 	white.setForeground(Qt::white);
 	c = new GmacsCompleter(this);
-	QFileSystemModel *model = new QFileSystemModel(c);
-	model->setRootPath(QDir::currentPath());
+	//QFileSystemModel *model = new QFileSystemModel(c);
+	//model->setRootPath(QDir::currentPath());
+	QDirModel *model = new QDirModel(c);
+	//QStringList words;
+	//words << "hoge" << "helloworld";
 	c->setModel(model);
 	kb = new GmacsKeyBind();
 	const int blinkPeriod = 500;
@@ -101,6 +104,7 @@ void GmacsLineField::keyPressEvent(QKeyEvent *event)
 	QRect cr = cursorRect();
 	cr.setWidth(c->popup()->sizeHintForColumn(0) + c->popup()->verticalScrollBar()->sizeHint().width());
 	c->complete(cr); // popup it up!
+	setTextCursor(cursor);
 }
 
 QString GmacsLineField::textUnderCursor(void) const

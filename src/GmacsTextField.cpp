@@ -12,6 +12,8 @@ GmacsTextField::GmacsTextField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 	int space_size = metrics.width(' ');
 	//fprintf(stderr, "space size = [%d]\n", space_size);
 	setTabStopWidth(space_size * 4);
+	setCenterOnScroll(true);
+	ensureCursorVisible();
 	setObjectName("GmacsTextField");
 	setTextCursor(cursor);
 	isFocus = true;
@@ -22,16 +24,16 @@ GmacsTextField::GmacsTextField(QPlainTextEdit *parent) : QPlainTextEdit(parent)
 	startTimer(blinkPeriod);
 	sh = new GmacsSyntaxHighlighter(document());
 	c = new GmacsCompleter(this);
+	gpp = new GmacsPreprocessor();
 	white.setForeground(Qt::white);
 	line_number_area = new GmacsLineNumberArea(this);
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
     connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
-	QScrollBar *vertical_scroll_bar = verticalScrollBar();
-	connect(vertical_scroll_bar, SIGNAL(rangeChanged(int,int)), this, SLOT(updateViewingPosition(int, int)));
     updateLineNumberAreaWidth(0);
 	kb = new GmacsKeyBind();
 	script_loader = new GmacsScriptLoader();
 	connect(kb, SIGNAL(emitFindFileSignal()), this, SLOT(findFile()));
+	designer = new GmacsInteractiveDesigner();
 }
 
 int GmacsTextField::lineNumberAreaWidth(void)
@@ -44,14 +46,6 @@ int GmacsTextField::lineNumberAreaWidth(void)
     }
     int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
     return space;
-}
-
-void GmacsTextField::updateViewingPosition(int min, int max)
-{
-	if (max > 0) {
-		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor);
-		setTextCursor(cursor);
-	}
 }
 
 void GmacsTextField::updateLineNumberAreaWidth(int block_count)
@@ -163,9 +157,13 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 {
 	isKeyPress = true;
 	if (event->modifiers() == Qt::META) {
+		if (event->key() == Qt::Key_Return) {
+			designer->eval(toPlainText());
+			return;
+		}
 		GmacsKeyBindFunc func = kb->getKeyBindFunction(event);
 		if (func != NULL) {
-			//fprintf(stderr, "CTRL+key\n");
+			fprintf(stderr, "CTRL+key\n");
 			(kb->*func)(&cursor);
 			setTextCursor(cursor);
 		}
@@ -173,19 +171,12 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 		command_count = 0;
 	}
 	switch (event->key()) {
-	case Qt::Key_Backspace:
-		kill_buf_count = 0;
-		if (cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor)) {
-			cursor.deleteChar();
-		}
-		command_count = 0;
-		break;
 	case Qt::Key_Return:
 		if (c && c->popup()->isVisible()) {
 			event->ignore();
 			return;
 		} else {
-			cursor.insertText("\n");
+			QPlainTextEdit::keyPressEvent(event);
 			command_count = 0;
 		}
 		break;
@@ -203,7 +194,9 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 		//cursor.insertText(event->text());
 		//setTextCursor(cursor);
 		command_count = 0;
-		QPlainTextEdit::keyPressEvent(event);
+		if (event->modifiers() != Qt::META) {
+			QPlainTextEdit::keyPressEvent(event);
+		}
 		break;
 	}
 	bool isShortcut = ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_U); // CTRL+U
@@ -212,6 +205,16 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 	bool hasModifier = (event->modifiers() != Qt::NoModifier) && !ctrlOrShift;
 	QString completionPrefix = textUnderCursor();
+	//qDebug() << completionPrefix;
+	if (isInstance(completionPrefix)) {
+		//TODO : doesn't save to file
+		QFile file("hoge.cpp");
+		file.open(QIODevice::WriteOnly | QIODevice::Text);
+		QTextStream out(&file);
+		out << cursor.document()->toPlainText();
+		file.close();
+		gpp->codeCompletion(cursor);
+	}
 	if (!isShortcut && (hasModifier || event->text().isEmpty() ||
 						completionPrefix.length() < 3 || eow.contains(event->text().right(1)))) {
 		c->popup()->hide();
@@ -225,6 +228,19 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	cr.setWidth(c->popup()->sizeHintForColumn(0) + c->popup()->verticalScrollBar()->sizeHint().width());
 	c->complete(cr); // popup it up!
 	setTextCursor(cursor);
+}
+
+bool GmacsTextField::isInstance(const QString &completionPrefix)
+{
+	int size = completionPrefix.size();
+	QTextCursor tc = textCursor();
+	int pos = tc.position();
+	QChar ch = document()->characterAt(pos - size - 1);
+	bool ret = false;
+	if (ch == '.') {
+		ret = true;
+	}
+	return ret;
 }
 
 QString GmacsTextField::textUnderCursor(void) const
@@ -262,14 +278,12 @@ void GmacsTextField::loadText(QString filepath)
 {
 	//cout << qPrintable(filepath) << endl;
 	QString buf = script_loader->loadScript(filepath);
-	GmacsPreprocessor cpp;
-	cpp.setDocument(buf);
-	cpp.start();
-	sh->addTypes(cpp.added_words);
-	QTextDocument *doc = document();
-	doc->setPlainText(buf);
 	QTextCursor cur = textCursor();
 	cursor = cur;
+	gpp->compile(filepath, cur);
+	//sh->addTypes(cpp.added_words);
+	QTextDocument *doc = document();
+	doc->setPlainText(buf);
 	QStringList words;
 	QStringList list = buf.split("\n");
 	QRegExp word_pattern("\\b[A-Za-z0-9_]+\\b");

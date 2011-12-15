@@ -16,7 +16,6 @@ QScrollBar::handle:vertical {
 
 QScrollBar::sub-page:vertical {
 	background: white;
-	foreground: white;
 	border-width:5px;
 	border-style:solid;
 	border-top-left-radius: 30px;
@@ -28,7 +27,6 @@ QScrollBar::sub-page:vertical {
 
 QScrollBar::add-page:vertical {
 	background: white;
-	foreground: white;
 	border-width:5px;
 	border-style:solid;
 	border-bottom-left-radius: 30px;

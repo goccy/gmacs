@@ -1,10 +1,14 @@
 #include <gmacs.hpp>
 
+#define GOTO_NEXT_TAB() tab->setCurrentIndex(cur_tab_idx+1)
+#define GOTO_PREV_TAB() tab->setCurrentIndex(cur_tab_idx-1)
+#define GOTO_LAST_TAB() tab->setCurrentIndex(tab->count()-1)
+
 GmacsMainWindow::GmacsMainWindow(QWidget *parent) : QWidget(parent)
 {
 	resize(600, 600);
 	setWindowOpacity(0.8);
-	setWindowTitle("Gmacs");
+	//setWindowTitle("Gmacs");
 	tab = new GmacsTabWidget(this);
 	widget = new GmacsWidget(this);
 	QVBoxLayout *layout = new QVBoxLayout();
@@ -13,7 +17,7 @@ GmacsMainWindow::GmacsMainWindow(QWidget *parent) : QWidget(parent)
 	layout->addWidget(tab);
 	layout->addWidget(widget);
 	setLayout(layout);
-	tab->addTab(widget, tr("Gmacs"));
+	tab->addTab(widget, tr("tab1"));
 }
 
 void GmacsMainWindow::keyPressEvent(QKeyEvent *event)
@@ -22,20 +26,12 @@ void GmacsMainWindow::keyPressEvent(QKeyEvent *event)
 		event->modifiers() & Qt::CTRL) {
 		int tab_max_num = tab->count();
 		int cur_tab_idx = tab->currentIndex();
-		//fprintf(stderr, "tab_max_num = [%d]\n", tab_max_num);
-		//fprintf(stderr, "cur_tab_idx = [%d]\n", cur_tab_idx);
 		switch (event->key()) {
 		case Qt::Key_BracketRight:
-			if (tab_max_num - 1 > cur_tab_idx) {
-				//fprintf(stderr, "switch right tab\n");
-				tab->setCurrentIndex(cur_tab_idx+1);
-			}
+			if (tab_max_num - 1 > cur_tab_idx) GOTO_NEXT_TAB();
 			break;
 		case Qt::Key_BracketLeft:
-			if (cur_tab_idx > 0) {
-				//fprintf(stderr, "switch left tab\n");
-				tab->setCurrentIndex(cur_tab_idx-1);
-			}
+			if (cur_tab_idx > 0) GOTO_PREV_TAB();
 			break;
 		default:
 			break;
@@ -52,4 +48,5 @@ void GmacsMainWindow::addTab(void)
 {
 	GmacsWidget *w = new GmacsWidget(this);
 	tab->addTab(w, tr("Gmacs"));
+	GOTO_LAST_TAB();
 }

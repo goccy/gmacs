@@ -1,6 +1,7 @@
 #include <iostream>
 #include <QtGui>
 #include <gmacs_class.hpp>
+#define QSTRING_TO_CHAR(str) str.toLocal8Bit().data()
 
 typedef enum {
 	DEF_T,
@@ -21,6 +22,22 @@ class Gmacs : public QApplication {
 public:
 	Gmacs(int argc, char **argv);
 	void start(void);
+};
+
+#define K_INTERNAL
+#include <konoha1.h>
+class GmacsInteractiveDesigner {
+public:
+	kcontext_t *ctx;
+	QString prev_script;
+	QStringList global_decls;
+
+	GmacsInteractiveDesigner(void);
+	void eval(const QString &script);
+	void traverseFieldObject(void);
+	QString removeNoneModifiedScript(const QString &script);
+	QString removeGlobalScopeConstructor(const QString &script);
+	~GmacsInteractiveDesigner(void);
 };
 
 class GmacsMainWindow : public QWidget {
@@ -81,18 +98,30 @@ typedef struct GmacsTypeObject {
 	QStringList public_method_list;
 } GmacsTypeObject;
 
+#include <clang-c/Index.h>
+
 class GmacsPreprocessor {
 private:
 	QString document;
 	QList<GmacsTypeObject> typeobjs;
+	QList<char *> *include_dirs;
+	int include_dirs_size;
+	CXIndex idx;
+	CXTranslationUnit unit;
+	CXUnsavedFile *unsaved_file;
+	QString *filename;
 public:
 	QStringList added_words;
 
 	GmacsPreprocessor(void);
+	~GmacsPreprocessor(void);
+	void compile(const QString &filename, const QTextCursor &cursor);
+	void codeCompletion(const QTextCursor &cursor);
 	void setMode(const QString &mode);
 	void setDocument(const QString &document);
 	void start(void);
 	void analyze(const QStringList &list, const QRegExp &expression);
+	QStringList getTypeObjectLines(const QStringList &list, int start_idx);
 	void traverseTypeObject(const QStringList &list, int start_idx);
 };
 
@@ -262,6 +291,7 @@ public:
 	void bindKeys();
 	void bindCommands();
 	GmacsKeyBindFunc getKeyBindFunction(QKeyEvent *event);
+	void clearCommand(QTextCursor *cursor);
 	void moveLineTop(QTextCursor *cursor);
 	void moveLineEnd(QTextCursor *cursor);
 	void moveLeft(QTextCursor *cursor);
@@ -297,12 +327,14 @@ private:
 	int command_count;
 	QTextCharFormat white;
 	GmacsScriptLoader *script_loader;
-
+	GmacsInteractiveDesigner *designer;
+	GmacsPreprocessor *gpp;
 public:
 	GmacsKeyBind *kb;
 	bool isFindFileMode;
 	bool isFocus;
 	GmacsTextField(QPlainTextEdit *parent = 0);
+	bool isInstance(const QString &prefix);
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth(void);
 	void paintEvent(QPaintEvent *event);
@@ -322,7 +354,6 @@ public slots:
 	void insertCompletion(const QString &completion);
     void updateLineNumberAreaWidth(int newBlockCount);
     void updateLineNumberArea(const QRect &, int);
-	void updateViewingPosition(int min, int max);
 };
 
 class GmacsLineField : public QPlainTextEdit {
