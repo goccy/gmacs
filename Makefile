@@ -61,6 +61,7 @@ SOURCES       = src/Gmacs.cpp \
 		src/GmacsTextField.cpp \
 		src/GmacsTokenizer.cpp \
 		src/GmacsWidget.cpp \
+		src/GmacsMainWidget.cpp\
 		src/main.cpp moc_gmacs.cpp
 OBJECTS       = Gmacs.o \
 		GmacsCompleter.o \
@@ -79,6 +80,7 @@ OBJECTS       = Gmacs.o \
 		GmacsTextField.o \
 		GmacsTokenizer.o \
 		GmacsWidget.o \
+		GmacsMainWidget.o \
 		main.o \
 		moc_gmacs.o
 DIST          = /usr/local/Trolltech/Qt-4.7.3/mkspecs/common/unix.conf \
@@ -347,6 +349,10 @@ GmacsTokenizer.o: src/GmacsTokenizer.cpp include/gmacs.hpp \
 GmacsWidget.o: src/GmacsWidget.cpp include/gmacs.hpp \
 		include/gmacs_class.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o GmacsWidget.o src/GmacsWidget.cpp
+
+GmacsMainWidget.o: src/GmacsMainWidget.cpp include/gmacs.hpp \
+		include/gmacs_class.hpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o GmacsMainWidget.o src/GmacsMainWidget.cpp
 
 main.o: src/main.cpp include/gmacs.hpp \
 		include/gmacs_class.hpp

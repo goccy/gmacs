@@ -86,6 +86,7 @@ void GmacsPreprocessor::codeCompletion(const QTextCursor &cursor)
 	QString text = cursor.block().text();
 	QRegExp exp("\t");
 	int tab_count = text.count(exp);
+	fprintf(stderr, "column = [%d]\n", cursor.positionInBlock());
 	//unsaved_file->Filename = name;
 	//unsaved_file->Contents = document.toLocal8Bit().data();
 	//unsaved_file->Length = document.size();
@@ -93,7 +94,7 @@ void GmacsPreprocessor::codeCompletion(const QTextCursor &cursor)
 	CLANG_REPARSE(unit, NULL);//unsaved_file);
 	fprintf(stderr, "line = [%d], column = [%d]\n", line+1, column + tab_count);
 	fprintf(stderr, "name = [%s]\n", name);
-	CXCodeCompleteResults *res = CLANG_CODE_COMPLETION(unit, name, line+1, column + tab_count * 2);
+	CXCodeCompleteResults *res = CLANG_CODE_COMPLETION(unit, name, line+1, column + tab_count);
 	if (!res) fprintf(stderr, "ERROR: could not complete\n");
 	for (size_t i = 0; i < clang_codeCompleteGetNumDiagnostics(res); i++) {
 		const CXDiagnostic &diag = clang_codeCompleteGetDiagnostic(res, i);
@@ -102,17 +103,17 @@ void GmacsPreprocessor::codeCompletion(const QTextCursor &cursor)
 	}
 	unsigned num_results = res->NumResults;
 	fprintf(stderr, "num_results = [%d]\n");
-    for (unsigned i = 0; i < num_results; i++) {
-        const CXCompletionString& str = res->Results[i].CompletionString;
+	for (unsigned i = 0; i < num_results; i++) {
+		const CXCompletionString& str = res->Results[i].CompletionString;
 		unsigned chunks = clang_getNumCompletionChunks(str);
-        for (unsigned j = 0; j < chunks; j++) {
-            const CXString& out = clang_getCompletionChunkText(str, j);
-            std::cout << clang_getCString(out) << " ";
-            if (clang_getCompletionChunkKind(str, j) != CXCompletionChunk_TypedText)
-                continue;
-        }
-        std::cout << std::endl;
-    }
+		for (unsigned j = 0; j < chunks; j++) {
+			const CXString& out = clang_getCompletionChunkText(str, j);
+			//std::cout << clang_getCString(out) << " ";
+			if (clang_getCompletionChunkKind(str, j) != CXCompletionChunk_TypedText)
+				continue;
+		}
+		//std::cout << std::endl;
+	}
 	clang_disposeCodeCompleteResults(res);
 }
 

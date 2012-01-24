@@ -18,34 +18,77 @@ typedef enum {
 	ARROW_T,
 } GmacsWordType;
 
+class GmacsStatePixmapItem : public QGraphicsPixmapItem {
+public:
+	int state_num;
+
+	GmacsStatePixmapItem(const QPixmap &pixmap, int state_num);
+	void mousePressEvent(QGraphicsSceneMouseEvent *event);
+};
+
+class GmacsStateScene : public QGraphicsScene {
+public:
+	QGraphicsItem *prev_selecteditem;
+	QList<GmacsStatePixmapItem *> items;
+
+	GmacsStateScene(void);
+	void addItem(GmacsStatePixmapItem *i);
+	void clearStatePixmapItem(void);
+	void mousePressEvent(QGraphicsSceneMouseEvent *event);
+};
+
+class GmacsStateViewer : public QGraphicsView {
+public:
+	GmacsStateViewer(QGraphicsScene *scene);
+};
+
 class Gmacs : public QApplication {
 public:
-	Gmacs(int argc, char **argv);
+	Gmacs(int &argc, char **argv);
 	void start(void);
 };
 
 #define K_INTERNAL
 #include <konoha1.h>
-class GmacsInteractiveDesigner {
+
+class GmacsInteractiveDesigner : QObject {
 public:
 	kcontext_t *ctx;
 	QString prev_script;
 	QStringList global_decls;
+	bool isFirstEvaluation;
+	long long int prev_logfilesize;
+	GmacsStateScene *scene;
+	int state_num;
 
 	GmacsInteractiveDesigner(void);
 	void eval(const QString &script);
 	void traverseFieldObject(void);
+	void timerEvent(QTimerEvent *event);
+	long long int getLogFileSize(void);
 	QString removeNoneModifiedScript(const QString &script);
 	QString removeGlobalScopeConstructor(const QString &script);
+	QString appendExecutionCode(const QString &script, const QString &exec);
+	QString appendEventStateCode(const QString &script, const QStringList &event_func_list);
+	QStringList getEventFunctionList(const QString &script);
 	~GmacsInteractiveDesigner(void);
 };
 
-class GmacsMainWindow : public QWidget {
+class GmacsMainWindow : public QMainWindow {
+	Q_OBJECT;
+public:
+	QDockWidget *dock;
+	GmacsMainWindow(QWidget *parent = 0);
+public slots:
+	void toggleDockWidget(void);
+};
+
+class GmacsMainWidget : public QWidget {
 	Q_OBJECT;
 public:
 	GmacsTabWidget *tab;
 	GmacsWidget *widget;
-    GmacsMainWindow(QWidget *parent = 0);
+    GmacsMainWidget(QWidget *parent = 0);
 	void addTab(void);
 	void keyPressEvent(QKeyEvent *event);
 };
@@ -291,6 +334,7 @@ public:
 	void bindKeys();
 	void bindCommands();
 	GmacsKeyBindFunc getKeyBindFunction(QKeyEvent *event);
+	void toggleStateDock(QTextCursor *cursor);
 	void clearCommand(QTextCursor *cursor);
 	void moveLineTop(QTextCursor *cursor);
 	void moveLineEnd(QTextCursor *cursor);
@@ -306,6 +350,7 @@ public:
 	void findFile(QTextCursor *cursor);
 signals:
 	void emitFindFileSignal(void);
+	void emitToggleStateDockSignal(void);
 };
 
 class GmacsTextField : public QPlainTextEdit {//public QTextEdit {
@@ -327,9 +372,9 @@ private:
 	int command_count;
 	QTextCharFormat white;
 	GmacsScriptLoader *script_loader;
-	GmacsInteractiveDesigner *designer;
 	GmacsPreprocessor *gpp;
 public:
+	GmacsInteractiveDesigner *designer;
 	GmacsKeyBind *kb;
 	bool isFindFileMode;
 	bool isFocus;

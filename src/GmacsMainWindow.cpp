@@ -1,52 +1,30 @@
 #include <gmacs.hpp>
 
-#define GOTO_NEXT_TAB() tab->setCurrentIndex(cur_tab_idx+1)
-#define GOTO_PREV_TAB() tab->setCurrentIndex(cur_tab_idx-1)
-#define GOTO_LAST_TAB() tab->setCurrentIndex(tab->count()-1)
-
-GmacsMainWindow::GmacsMainWindow(QWidget *parent) : QWidget(parent)
+GmacsStateViewer::GmacsStateViewer(QGraphicsScene *scene) : QGraphicsView(scene)
 {
+}
+
+GmacsMainWindow::GmacsMainWindow(QWidget *parent) : QMainWindow(parent)
+{
+	GmacsMainWidget *mainwidget = new GmacsMainWidget();
+	setCentralWidget(mainwidget);
+	GmacsTextField *edit_area = mainwidget->widget->main_field->edit_area;
+	GmacsInteractiveDesigner *designer = edit_area->designer;
+	GmacsKeyBind *kb = edit_area->kb;
+	GmacsStateViewer *viewer = new GmacsStateViewer(designer->scene);
+	dock = new QDockWidget(this, Qt::Drawer);
+	dock->setWidget(viewer);
+	dock->hide();
+	addDockWidget(Qt::RightDockWidgetArea, dock);
 	resize(600, 600);
-	setWindowOpacity(0.8);
-	//setWindowTitle("Gmacs");
-	tab = new GmacsTabWidget(this);
-	widget = new GmacsWidget(this);
-	QVBoxLayout *layout = new QVBoxLayout();
-	layout->setSpacing(0);
-	layout->setContentsMargins(QMargins(0, 0, 0, 0));
-	layout->addWidget(tab);
-	layout->addWidget(widget);
-	setLayout(layout);
-	tab->addTab(widget, tr("tab1"));
+	connect(kb, SIGNAL(emitToggleStateDockSignal()), this, SLOT(toggleDockWidget()));
 }
 
-void GmacsMainWindow::keyPressEvent(QKeyEvent *event)
+void GmacsMainWindow::toggleDockWidget(void)
 {
-	if (event->modifiers() & Qt::SHIFT &&
-		event->modifiers() & Qt::CTRL) {
-		int tab_max_num = tab->count();
-		int cur_tab_idx = tab->currentIndex();
-		switch (event->key()) {
-		case Qt::Key_BracketRight:
-			if (tab_max_num - 1 > cur_tab_idx) GOTO_NEXT_TAB();
-			break;
-		case Qt::Key_BracketLeft:
-			if (cur_tab_idx > 0) GOTO_PREV_TAB();
-			break;
-		default:
-			break;
-		}
-	} else if (event->modifiers() & Qt::CTRL) {
-		if (event->key() == Qt::Key_T) {
-			addTab();
-		}
+	if (dock->isVisible()) {
+		dock->hide();
+	} else {
+		dock->show();
 	}
-	QWidget::keyPressEvent(event);
-}
-
-void GmacsMainWindow::addTab(void)
-{
-	GmacsWidget *w = new GmacsWidget(this);
-	tab->addTab(w, tr("Gmacs"));
-	GOTO_LAST_TAB();
 }

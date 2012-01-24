@@ -73,7 +73,7 @@ void GmacsKeyBind::bindCommands(void)
 	BIND_COMMAND(CTRLA, NULL);
 	BIND_COMMAND(CTRLB, NULL);
 	BIND_COMMAND(CTRLC, NULL);
-	BIND_COMMAND(CTRLD, NULL);
+	BIND_COMMAND(CTRLD, &GmacsKeyBind::toggleStateDock);//GmacsOriginalCommand
 	BIND_COMMAND(CTRLE, NULL);
 	BIND_COMMAND(CTRLF, &GmacsKeyBind::findFile);
 	BIND_COMMAND(CTRLG, &GmacsKeyBind::clearCommand);
@@ -113,6 +113,12 @@ GmacsKeyBindFunc GmacsKeyBind::getKeyBindFunction(QKeyEvent *event)
 		}
 	}
 	return func;
+}
+
+void GmacsKeyBind::toggleStateDock(QTextCursor *cursor)
+{
+	(void)cursor;
+	emit emitToggleStateDockSignal();
 }
 
 void GmacsKeyBind::clearCommand(QTextCursor *cursor)

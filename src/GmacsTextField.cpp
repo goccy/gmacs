@@ -208,12 +208,12 @@ void GmacsTextField::keyPressEvent(QKeyEvent *event)
 	//qDebug() << completionPrefix;
 	if (isInstance(completionPrefix)) {
 		//TODO : doesn't save to file
-		QFile file("hoge.cpp");
-		file.open(QIODevice::WriteOnly | QIODevice::Text);
-		QTextStream out(&file);
-		out << cursor.document()->toPlainText();
-		file.close();
-		gpp->codeCompletion(cursor);
+		//QFile file("hoge.cpp");
+		//file.open(QIODevice::WriteOnly | QIODevice::Text);
+		//QTextStream out(&file);
+		//out << cursor.document()->toPlainText();
+		//file.close();
+		//gpp->codeCompletion(cursor);
 	}
 	if (!isShortcut && (hasModifier || event->text().isEmpty() ||
 						completionPrefix.length() < 3 || eow.contains(event->text().right(1)))) {
@@ -309,4 +309,5 @@ void GmacsTextField::loadText(QString filepath)
 	command[0] = 0;
 	command[1] = 0;
 	command[2] = 0;
+	if (designer) designer->isFirstEvaluation = true;
 }
